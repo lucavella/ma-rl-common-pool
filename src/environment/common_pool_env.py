@@ -5,7 +5,7 @@ from pycolab.ascii_art import ascii_art_to_game, Partial
 from pycolab.rendering import ObservationToArray
 import matplotlib.pyplot as plt
 from string import ascii_letters
-from functools import lru_cache
+from functools import lru_cache, cached_property
 from copy import copy
 import model
 import model.things as things
@@ -23,7 +23,7 @@ PROB_L_3_4 = .05
 PROB_L_GT_4 = .1
 RESPAWN_PROBABILITIES = [PROB_L_1_2, PROB_L_3_4, PROB_L_GT_4]
 
-BEAM_RANGE = 20
+BEAM_RANGE = 10
 BEAM_WIDTH = 5
 TIME_OUT = 25
 
@@ -65,11 +65,7 @@ class CommonPoolEnv(ParallelEnv):
         self.render_speed = render_speed
 
         self.engine = None
-        self.full_ota = ObservationToArray(value_mapping=self._color_map())
-        self.agents_ota = {
-            agent_id: ObservationToArray(value_mapping=self._color_map(agent_char))
-            for agent_id, agent_char in zip(agent_ids, self.agents_char)
-        }
+        self.ota = ObservationToArray(value_mapping=self.color_map)
 
 
     def _agent_dict_init(self, value):
@@ -79,10 +75,8 @@ class CommonPoolEnv(ParallelEnv):
         }
 
     
-    def _color_map(self, agent_pov=None):
-        other_agents = copy(self.agents_char)
-        if agent_pov:
-            other_agents.remove(agent_pov)
+    @cached_property
+    def color_map(self):
         color_map = {
             model.EMPTY_CHAR: EMPTY_COLOR,
             model.WALL_CHAR: WALL_COLOR,
@@ -90,18 +84,16 @@ class CommonPoolEnv(ParallelEnv):
             model.BEAM_CHAR: BEAM_COLOR,
             **{
                 agent_char: AGENT_COLOR
-                for agent_char in other_agents
+                for agent_char in self.agents_char
             }
         }
-        if agent_pov:
-            color_map[agent_pov] = POV_COLOR
 
         return color_map
 
 
     def _agent_observation(self, agent_id):
         agent_char = self.agents_char[agent_id]
-        observation_array = self.agents_ota[agent_id](self._observation)
+        observation_array = self.ota(self._observation)
         agent = self.engine.things[agent_char]
         counter_clock_k = - agent.orientation % model.N_ORIENTATIONS
         rotated_observation = np.rot90(observation_array, k=agent.orientation, axes=(1, 2))
@@ -131,6 +123,13 @@ class CommonPoolEnv(ParallelEnv):
             )
             for c in range(3)
         ], axis=0)
+
+        # Due to z-order, current agent might be under another
+        # So this cannot be done with a colormap
+        if not agent.tagged:
+            x = self.observation_width // 2
+            y = self.observation_ahead - 1
+            padded_observation[:, y, x] = POV_COLOR
 
         return padded_observation
 
@@ -193,7 +192,7 @@ class CommonPoolEnv(ParallelEnv):
 
 
     def render(self):
-        observation_array = self.full_ota(self._observation)
+        observation_array = self.ota(self._observation)
         plt.imshow(observation_array.transpose(1, 2, 0))
         plt.axis('off')
         plt.show(block=False)
