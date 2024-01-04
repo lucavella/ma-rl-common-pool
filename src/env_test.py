@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import environment
 import model
+import agent
 
 
 
@@ -14,17 +15,21 @@ def render_observation(observation):
 
 
 if __name__ == '__main__':
-    n_agents = 10
-    game_env = environment.CommonPoolEnv(model.DEFAULT_MAP, n_agents)
-    observations, *_ = game_env.reset()
-    game_env.render()
-    render_observation(observations[0])
+    agent_ids = list(range(10))
+    game_env = environment.CommonPoolEnv(model.DEFAULT_MAP, agent_ids)
+    pool = agent.AgentPool(game_env, [
+        agent.RandomAgent(agent_id, model.N_ACTIONS)
+        for agent_id in agent_ids
+    ])
 
-    while len(game_env.agents) > 0:
-        rand_actions = np.random.randint(model.N_ACTIONS, size=n_agents)
-        actions = {agent_id: action for agent_id, action in enumerate(rand_actions)}
-        observations, rew, *_ = game_env.step(actions)
+    pool.reset()
+    pool.render()
+    render_observation(pool.observations[0])
 
-        print(rew)
-        game_env.render()
-        render_observation(observations[0])
+    print(pool.game_over)
+
+    while not pool.game_over:
+        pool.step()
+        print(pool.rewards)
+        pool.render()
+        render_observation(pool.observations[0])

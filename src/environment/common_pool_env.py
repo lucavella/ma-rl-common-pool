@@ -38,8 +38,8 @@ POV_COLOR   = (0, 0, 255)
 class CommonPoolEnv(ParallelEnv):
     def __init__(
         self,
-        env_map: model.EnvMap,
-        n_agents,
+        env_map,
+        agent_ids,
         max_steps=MAX_STEPS,
         observation_ahead=OBSERVE_FRONT_VIEW,
         observation_width=OBSERVE_WIDTH_VIEW,
@@ -51,9 +51,9 @@ class CommonPoolEnv(ParallelEnv):
         render_speed=.2
     ):
         self.env_map = env_map
-        self.n_agents = n_agents
-        self.agents_char = list(ascii_letters)[:n_agents]
-        self.possible_agents = list(range(n_agents))
+        self.possible_agents = agent_ids
+        self.n_agents = len(agent_ids)
+        self.agents_char = list(ascii_letters)[:self.n_agents]
         self.observation_ahead = observation_ahead
         self.observation_width = observation_width
         self.agent_timeout = agent_timeout
@@ -68,7 +68,7 @@ class CommonPoolEnv(ParallelEnv):
         self.full_ota = ObservationToArray(value_mapping=self._color_map())
         self.agents_ota = {
             agent_id: ObservationToArray(value_mapping=self._color_map(agent_char))
-            for agent_id, agent_char in zip(range(n_agents), self.agents_char)
+            for agent_id, agent_char in zip(agent_ids, self.agents_char)
         }
 
 
