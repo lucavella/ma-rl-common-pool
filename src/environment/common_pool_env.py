@@ -15,8 +15,6 @@ import model.things as things
 OBSERVE_WIDTH_VIEW = 21
 OBSERVE_FRONT_VIEW = 20
 
-MAX_STEPS = 1000
-
 RESPAWN_BALL_RADIUS = 2
 PROB_L_1_2 = .01
 PROB_L_3_4 = .05
@@ -40,7 +38,7 @@ class CommonPoolEnv(ParallelEnv):
         self,
         env_map,
         agent_ids,
-        max_steps=MAX_STEPS,
+        max_steps,
         observation_ahead=OBSERVE_FRONT_VIEW,
         observation_width=OBSERVE_WIDTH_VIEW,
         agent_timeout=TIME_OUT,
@@ -109,20 +107,28 @@ class CommonPoolEnv(ParallelEnv):
         x_left_bound = max(x_min, 0)
         x_right_bound = min(x_max, w)
         y_top_bound = max(y_min, 0)
-        x_left_pad = x_left_bound - x_min
-        x_right_pad = x_max - x_right_bound
-        y_top_pad = y_top_bound - y_min
-
         cropped_observation = rotated_observation[:, y_top_bound:y_max, x_left_bound:x_right_bound]
-        padded_observation = np.stack([
-            np.pad(
-                cropped_observation[c, ...],
-                ((y_top_pad, 0), (x_left_pad, x_right_pad)),
-                mode='constant',
-                constant_values=EMPTY_COLOR[c]
-            )
-            for c in range(3)
-        ], axis=0)
+
+
+        left_pad = x_left_bound - x_min
+        right_pad = x_max - x_right_bound
+        top_pad = y_top_bound - y_min
+        left_padding = np.full((self.observation_ahead - top_pad, left_pad, 3), EMPTY_COLOR).transpose(2, 0, 1)
+        right_padding = np.full((self.observation_ahead - top_pad, right_pad, 3), EMPTY_COLOR).transpose(2, 0, 1)
+        top_padding = np.full((top_pad, self.observation_width, 3), EMPTY_COLOR).transpose(2, 0, 1)
+        width_padded_observation = np.append(np.append(left_padding, cropped_observation, axis=2), right_padding, axis=2)
+        padded_observation = np.append(top_padding, width_padded_observation, axis=1)
+
+        # # About half as slow as the above
+        # padded_observation = np.stack([
+        #     np.pad(
+        #         cropped_observation[c, ...],
+        #         ((top_pad, 0), (left_pad, right_pad)),
+        #         mode='constant',
+        #         constant_values=EMPTY_COLOR[c]
+        #     )
+        #     for c in range(3)
+        # ], axis=0)
 
         # Due to z-order, current agent might be under another
         # So this cannot be done with a colormap
@@ -210,8 +216,8 @@ class CommonPoolEnv(ParallelEnv):
             for agent_id, agent_char in zip(self.agents, self.agents_char)
         }
     
-        game_over = not self.engine.things[model.APPLE_CHAR].any_left
-        if self.timestep > self.max_steps or game_over:
+        # apples_left = self.engine.things[model.APPLE_CHAR].any_left
+        if self.timestep >= self.max_steps: # or not apples_left:
             self.truncations = self._agent_dict_init(True)
             self.terminations = self._agent_dict_init(True)
             self.agents.clear()

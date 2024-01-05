@@ -1,9 +1,11 @@
-import numpy as np
 import matplotlib.pyplot as plt
 import environment
 import model
 import agent
 
+
+
+MAX_STEPS = 1000
 
 
 def render_observation(observation):
@@ -16,7 +18,7 @@ def render_observation(observation):
 
 if __name__ == '__main__':
     agent_ids = list(range(10))
-    game_env = environment.CommonPoolEnv(model.DEFAULT_MAP, agent_ids)
+    game_env = environment.CommonPoolEnv(model.OPEN_MAP, agent_ids, MAX_STEPS)
     pool = agent.AgentPool(game_env, [
         agent.RandomAgent(agent_id, model.N_ACTIONS)
         for agent_id in agent_ids
