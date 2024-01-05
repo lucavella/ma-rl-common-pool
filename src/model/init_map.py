@@ -2,7 +2,7 @@ from .env_map import EnvMap
 
 
 
-DEFAULT_MAP = EnvMap([
+OPEN_MAP = EnvMap([
     "##########################################",
     "#            o      ooooo           o    #",
     "#        o   oo         ooo        o  o  #",

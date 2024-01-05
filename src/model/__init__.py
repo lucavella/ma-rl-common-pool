@@ -29,4 +29,4 @@ from .env_map import (
     BEAM_CHAR,
 )
 
-from .init_map import DEFAULT_MAP
+from .init_map import OPEN_MAP
