@@ -15,7 +15,6 @@ GAMMA = 0.99
 BATCH_SIZE = 32
 UPDATE_INTERVAL = 4
 TARGET_UPDATE_INTERVAL = 1000
-# TARGET_UPDATE_INTERVAL = 20
 
 
 
@@ -27,6 +26,7 @@ class DQNAgent:
         n_episodes,
         device,
         observation_shape,
+        cnn_dqn=True,
         epsilon_start=EPSILON_START,
         epsilon_end=EPSILON_END,
         learning_rate=ALPHA,
@@ -39,15 +39,16 @@ class DQNAgent:
         self.n_actions = n_actions
         self.n_episodes = n_episodes
         self.device = device
-        self.input_size = np.prod(observation_shape)
+        self.observation_shape = observation_shape
+        self.cnn_dqn = True
         self.epsilon_start = epsilon_start
         self.epsilon_step = (epsilon_end - epsilon_start) / n_episodes
         self.learning_rate = learning_rate
         self.alpha = learning_rate
         self.gamma = discount_factor
         self.batch_size = batch_size
-        self.update_interval = update_interval # 4, source human-level
-        self.target_update_interval = target_update_interval # 10, 1000 in source https://github.com/jihoonerd/Human-level-control-through-deep-reinforcement-learning/blob/master/dqn/agent/dqn_agent.py)
+        self.update_interval = update_interval
+        self.target_update_interval = target_update_interval
         self.learn = True
         self.criterion = nn.SmoothL1Loss()
 
@@ -71,8 +72,12 @@ class DQNAgent:
             self.episode = 0
             self.epsilon = self.epsilon_start
             self.memory = dqn.ReplayMemory(self.n_episodes)
-            self.policy_net = dqn.DQN(self.input_size, self.n_actions).to(self.device)
-            self.target_net = dqn.DQN(self.input_size, self.n_actions).to(self.device)
+            if self.cnn_dqn:
+                self.policy_net = dqn.CnnDQN(self.observation_shape, self.n_actions).to(self.device)
+                self.target_net = dqn.CnnDQN(self.observation_shape, self.n_actions).to(self.device)
+            else:
+                self.policy_net = dqn.DQN(self.observation_shape, self.n_actions).to(self.device)
+                self.target_net = dqn.DQN(self.observation_shape, self.n_actions).to(self.device)
             self.target_net.load_state_dict(self.policy_net.state_dict())
             if self.learn:
                 self.policy_net.eval()
@@ -108,19 +113,18 @@ class DQNAgent:
             next_observation = torch.tensor(observation, dtype=torch.float32, device=self.device).unsqueeze(0) / 256
 
             # Store the transition in memory
-            # memory = ('state', 'action', 'next_state', 'reward'))
+            # memory = (state, action, next_state, reward)
             self.memory.push(self.last_observation, self.last_action, next_observation, reward)
 
-            # ik weet niet of dit elke episode moet of ook om de zoveel (in human level is dit denk ik 4)
-            #if (i_episode % self.update_interval == 0):
+            # if self.episode % self.update_interval == 0:
             self.optimize_model()
 
             """
             More precisely, every C updates we clone the network Q to obtain a target network ^Q and use ^Q for generating the
             Q-learning targets yj for the following C updates to Q
-            source (human-level control)
+            Source: human-level control
             """
-            if (self.episode % self.target_update_interval == 0):
+            if self.episode % self.target_update_interval == 0:
                 target_net_state_dict = self.target_net.state_dict()
                 policy_net_state_dict = self.policy_net.state_dict()
                 for key in policy_net_state_dict:

@@ -1,25 +1,38 @@
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 
 class CnnDQN(nn.Module):
-    def __init__(self, input_size, output_size, hidden_size=32, kernel_size=5, padding=0, stride=1):
+    def __init__(self, input_shape, output_size, hidden_size=32):
         super().__init__()
-        conv1_out = (input_size - kernel_size + 2 * padding) / stride + 1
-        conv2_out = (conv1_out - kernel_size + 2 * padding) / stride + 1
+        depth, h, w = input_shape
+        conv1_filters = 16
+        conv1_kernel_size = 5
+        conv1_stride = 2
+        conv2_filters = 32
+        conv2_kernel_size = 3
+        conv2_stride = 1
 
-        self.conv1 = nn.Conv2d(3, 32, kernel_size=kernel_size, stride=stride, padding=padding)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=kernel_size, stride=stride, padding=padding)
+        conv_out_h = (((h - conv1_kernel_size) // conv1_stride + 1) - conv2_kernel_size) // conv2_stride + 1
+        conv_out_w = (((w - conv1_kernel_size) // conv1_stride + 1) - conv2_kernel_size) // conv2_stride + 1
+        flatten_out = conv2_filters * conv_out_h * conv_out_w
 
-        # flatten
-        self.layer1 = nn.Linear(conv2_out, hidden_size)    # Input Layer
-        self.layer2 = nn.Linear(hidden_size, hidden_size)   # Hidden layer 1
-        self.layer3 = nn.Linear(hidden_size, hidden_size)   # Hidden Layer 2
-        self.layer4 = nn.Linear(hidden_size, output_size)   # Output Layer
+        self.conv = nn.Sequential(
+            nn.Conv2d(depth, conv1_filters, kernel_size=conv1_kernel_size, stride=conv1_stride),
+            nn.ReLU(),
+            nn.Conv2d(conv1_filters, conv2_filters, kernel_size=conv2_kernel_size, stride=conv2_stride),
+            nn.ReLU()
+        )
+
+        self.fc = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(flatten_out, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, output_size)
+        )
+
 
     def forward(self, x):
-        x = F.relu(self.layer1(x))
-        x = F.relu(self.layer2(x))
-        x = F.relu(self.layer3(x))
-        return self.layer4(x)
+        x = self.conv(x)
+        x = self.fc(x)
+        return x
