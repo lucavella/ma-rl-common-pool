@@ -84,11 +84,11 @@ class DQNAgent:
                 self.target_net = dqn.DQN(self.observation_shape, self.n_actions).to(self.device)
             self.target_net.load_state_dict(self.policy_net.state_dict())
             if self.learn:
+                self.policy_net.train()
+                self.target_net.train()
+            else:
                 self.policy_net.eval()
                 self.target_net.eval()
-            else:
-                self.policy_net.train()
-                self.target_net.train
             self.optimizer = optim.RMSprop(
                 self.policy_net.parameters(),
                 lr=self.learning_rate,
