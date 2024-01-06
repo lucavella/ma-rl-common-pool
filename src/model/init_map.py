@@ -49,7 +49,7 @@ SINGLE_ENTRANCE_MAP = EnvMap([
     "# ooo  ooo  ooo  ooo  ooo#   #ooo  ooo  ooo  ooo  ooo #",
     "#  o    o    o    o    o #   # o    o    o    o    o  #",
     "#######################################################",
-], starting_zones=[((9, 1), (16, 24)), ((9, 31), (16, 54))])
+], starting_zones=[((9, 1), (12, 24)), ((9, 31), (12, 54))])
 
 
 MULTI_ENTRANCE_MAP = EnvMap([
@@ -73,4 +73,4 @@ MULTI_ENTRANCE_MAP = EnvMap([
     "# ooo  ooo  ooo  ooo  ooo#    ooo  ooo  ooo  ooo  ooo #",
     "#  o    o    o    o    o #   # o    o    o    o    o  #",
     "#######################################################",
-], starting_zones=[((9, 1), (16, 24)), ((9, 31), (16, 54))])
+], starting_zones=[((9, 1), (12, 24)), ((9, 31), (12, 54))])
