@@ -116,7 +116,7 @@ class CommonPoolEnv(ParallelEnv):
         y_top_bound = max(y_min, 0)
         cropped_observation = rotated_observation[:, y_top_bound:y_max, x_left_bound:x_right_bound]
 
-
+        # More than double as fast as np.pad
         left_pad = x_left_bound - x_min
         right_pad = x_max - x_right_bound
         top_pad = y_top_bound - y_min
@@ -125,17 +125,6 @@ class CommonPoolEnv(ParallelEnv):
         top_padding = np.full((top_pad, self.observation_width, 3), EMPTY_COLOR).transpose(2, 0, 1)
         width_padded_observation = np.append(np.append(left_padding, cropped_observation, axis=2), right_padding, axis=2)
         padded_observation = np.append(top_padding, width_padded_observation, axis=1)
-
-        # # About half as slow as the above
-        # padded_observation = np.stack([
-        #     np.pad(
-        #         cropped_observation[c, ...],
-        #         ((top_pad, 0), (left_pad, right_pad)),
-        #         mode='constant',
-        #         constant_values=EMPTY_COLOR[c]
-        #     )
-        #     for c in range(3)
-        # ], axis=0)
 
         # Due to z-order, current agent might be under another
         # So this cannot be done with a colormap
@@ -212,7 +201,7 @@ class CommonPoolEnv(ParallelEnv):
             plt.show(block=False)
             plt.pause(self.render_speed)
         elif self.render_mode == 'rgb_array':
-            return observation_array
+            return observation_array.transpose(1, 2, 0)
 
 
     def step(self, actions):

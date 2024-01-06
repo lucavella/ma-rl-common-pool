@@ -13,3 +13,5 @@ from .plots import (
     plot_equality,
     plot_peacefulness,
 )
+
+from .utils import create_directory
