@@ -14,7 +14,7 @@ ALPHA = 1e-4
 GAMMA = 0.99
 BATCH_SIZE = 32
 UPDATE_INTERVAL = 4
-TARGET_UPDATE_INTERVAL = 1000
+TARGET_UPDATE_INTERVAL = 200
 
 
 
@@ -116,8 +116,8 @@ class DQNAgent:
             # memory = (state, action, next_state, reward)
             self.memory.push(self.last_observation, self.last_action, next_observation, reward)
 
-            # if self.episode % self.update_interval == 0:
-            self.optimize_model()
+            if self.episode % self.update_interval == 0:
+                self.optimize_model()
 
             """
             More precisely, every C updates we clone the network Q to obtain a target network ^Q and use ^Q for generating the
