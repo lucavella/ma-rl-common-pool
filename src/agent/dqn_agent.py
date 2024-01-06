@@ -8,14 +8,15 @@ import agent.dqn as dqn
 
 
 
-EPSILON_START = 1
-EPSILON_END = 0.1
-ALPHA = 1e-4
-GAMMA = 0.99
+EXPLORATION_RATE_START = 1
+EXPLORATION_RATE_END = .1
+LEARNING_RATE = 2.5e-4
+MOMENTUM = .95
+SMOOTHING_CONST = .95
+WEIGHT_DECAY_RATE = 0.
+DISCOUNT_FACTOR = .99
 BATCH_SIZE = 32
-UPDATE_INTERVAL = 4
-TARGET_UPDATE_INTERVAL = 200
-
+TARGET_UPDATE_INTERVAL = 500
 
 
 class DQNAgent:
@@ -27,12 +28,14 @@ class DQNAgent:
         device,
         observation_shape,
         cnn_dqn=True,
-        epsilon_start=EPSILON_START,
-        epsilon_end=EPSILON_END,
-        learning_rate=ALPHA,
-        discount_factor=GAMMA,
+        exploration_rate_start=EXPLORATION_RATE_START,
+        exploration_rate_end=EXPLORATION_RATE_END,
+        learning_rate=LEARNING_RATE,
+        momentum=MOMENTUM,
+        smoothing_constant=SMOOTHING_CONST,
+        weight_decay_rate=WEIGHT_DECAY_RATE,
+        discount_factor=DISCOUNT_FACTOR,
         batch_size=BATCH_SIZE,
-        update_interval=UPDATE_INTERVAL,
         target_update_interval=TARGET_UPDATE_INTERVAL,
     ):
         self.agent_id = agent_id
@@ -41,13 +44,14 @@ class DQNAgent:
         self.device = device
         self.observation_shape = observation_shape
         self.cnn_dqn = True
-        self.epsilon_start = epsilon_start
-        self.epsilon_step = (epsilon_end - epsilon_start) / n_episodes
+        self.exploration_rate_start = exploration_rate_start
+        self.exploration_rate_step = (exploration_rate_end - exploration_rate_start) / n_episodes
         self.learning_rate = learning_rate
-        self.alpha = learning_rate
-        self.gamma = discount_factor
+        self.momentum = momentum
+        self.smoothing_constant = smoothing_constant
+        self.weight_decay_rate = weight_decay_rate
+        self.discount_factor = discount_factor
         self.batch_size = batch_size
-        self.update_interval = update_interval
         self.target_update_interval = target_update_interval
         self.learn = True
         self.criterion = nn.SmoothL1Loss()
@@ -70,7 +74,7 @@ class DQNAgent:
     def reset(self, full=False):
         if full:
             self.episode = 0
-            self.epsilon = self.epsilon_start
+            self.exploration_rate = self.exploration_rate_start
             self.memory = dqn.ReplayMemory(self.n_episodes)
             if self.cnn_dqn:
                 self.policy_net = dqn.CnnDQN(self.observation_shape, self.n_actions).to(self.device)
@@ -85,16 +89,21 @@ class DQNAgent:
             else:
                 self.policy_net.train()
                 self.target_net.train
-            self.optimizer = optim.AdamW(self.policy_net.parameters(), lr=self.alpha, amsgrad=True)
-            # self.optimizer = optim.RMSProp(self.policy_net.parameters(), lr=self.alpha)
+            self.optimizer = optim.RMSprop(
+                self.policy_net.parameters(),
+                lr=self.learning_rate,
+                momentum=self.momentum,
+                alpha=self.smoothing_constant,
+                weight_decay=self.weight_decay_rate
+            )
         elif self.learn:
             self.episode += 1
-            self.epsilon -= self.epsilon_step
+            self.exploration_rate -= self.exploration_rate_step
 
 
     def choose_action(self, observation):
         self.last_observation = torch.tensor(observation, dtype=torch.float32, device=self.device).unsqueeze(0) / 256
-        if self.learn and random.random() < self.epsilon:
+        if self.learn and random.random() < self.exploration_rate:
             self.last_action = np.random.randint(self.n_actions)
         else:
             with torch.no_grad():
@@ -116,8 +125,7 @@ class DQNAgent:
             # memory = (state, action, next_state, reward)
             self.memory.push(self.last_observation, self.last_action, next_observation, reward)
 
-            if self.episode % self.update_interval == 0:
-                self.optimize_model()
+            self.optimize_model()
 
             """
             More precisely, every C updates we clone the network Q to obtain a target network ^Q and use ^Q for generating the
@@ -165,7 +173,7 @@ class DQNAgent:
         with torch.no_grad():
             next_state_values[non_final_mask] = self.target_net(non_final_next_states).max(1).values
         # Compute the expected Q values
-        expected_state_action_values = (next_state_values * self.gamma) + reward_batch
+        expected_state_action_values = (next_state_values * self.discount_factor) + reward_batch
 
         # Compute Huber loss
         loss = self.criterion(state_action_values, expected_state_action_values.unsqueeze(1))
