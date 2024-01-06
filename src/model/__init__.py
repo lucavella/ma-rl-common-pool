@@ -29,4 +29,8 @@ from .env_map import (
     BEAM_CHAR,
 )
 
-from .init_map import OPEN_MAP
+from .init_map import (
+    OPEN_MAP,
+    SINGLE_ENTRANCE_MAP,
+    MULTI_ENTRANCE_MAP
+)

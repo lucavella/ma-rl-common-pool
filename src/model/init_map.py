@@ -25,4 +25,52 @@ OPEN_MAP = EnvMap([
     "# o    o     ooo  o        o             #",
     "#             o                          #",
     "##########################################",
-], [((16, 34), (21, 41))])
+], starting_zones=[((15, 34), (21, 41))])
+
+
+SINGLE_ENTRANCE_MAP = EnvMap([
+    "#######################################################",
+    "#  o    o    o    o    o #   # o    o    o    o    o  #",
+    "# ooo  ooo  ooo  ooo  ooo#   #ooo  ooo  ooo  ooo  ooo #",
+    "#  o    o    o    o    o #   # o    o    o    o    o  #",
+    "#                        #   #                        #",
+    "#     o    o    o    o   #   #   o    o    o    o     #",
+    "#    ooo  ooo  ooo  ooo# #   ###ooo  ooo  ooo  ooo    #",
+    "#     o    o    o    o # #       o    o    o    o     #",
+    "######################## #   ##########################",
+    "#                                                     #",
+    "#                                                     #",
+    "#                                                     #",
+    "##########################   # ########################",
+    "#     o    o    o    o       # # o    o    o    o     #",
+    "#    ooo  ooo  ooo  ooo###   # #ooo  ooo  ooo  ooo    #",
+    "#     o    o    o    o   #   #   o    o    o    o     #",
+    "#  o    o    o    o    o #   # o    o    o    o    o  #",
+    "# ooo  ooo  ooo  ooo  ooo#   #ooo  ooo  ooo  ooo  ooo #",
+    "#  o    o    o    o    o #   # o    o    o    o    o  #",
+    "#######################################################",
+], starting_zones=[((9, 1), (16, 24)), ((9, 31), (16, 54))])
+
+
+MULTI_ENTRANCE_MAP = EnvMap([
+    "#######################################################",
+    "#  o    o    o    o    o #   # o    o    o    o    o  #",
+    "# ooo  ooo  ooo  ooo  ooo    #ooo  ooo  ooo  ooo  ooo #",
+    "#  o    o    o    o    o #   # o    o    o    o    o  #",
+    "#                        #                            #",
+    "#     o    o    o    o   #   #   o    o    o    o     #",
+    "#    ooo  ooo  ooo  ooo# #   ###ooo  ooo  ooo  ooo    #",
+    "#     o    o    o    o # #       o    o    o    o     #",
+    "## ###### ############## #   ############ ####### #####",
+    "#                                                     #",
+    "#                                                     #",
+    "#                                                     #",
+    "##### ####### ############   # ############## ###### ##",
+    "#     o    o    o    o   #   # # o    o    o    o     #",
+    "#    ooo  ooo  ooo  ooo###   # #ooo  ooo  ooo  ooo    #",
+    "#     o    o    o    o   #   #   o    o    o    o     #",
+    "#  o    o    o    o    o     # o    o    o    o    o  #",
+    "# ooo  ooo  ooo  ooo  ooo#    ooo  ooo  ooo  ooo  ooo #",
+    "#  o    o    o    o    o #   # o    o    o    o    o  #",
+    "#######################################################",
+], starting_zones=[((9, 1), (16, 24)), ((9, 31), (16, 54))])
