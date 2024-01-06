@@ -34,6 +34,11 @@ POV_COLOR   = (0, 0, 255)
 
 
 class CommonPoolEnv(ParallelEnv):
+    metadata = {
+        'name': 'common_pool_environment',
+        'render_modes': ['human', 'rgb_array']
+    }
+
     def __init__(
         self,
         env_map,
@@ -46,7 +51,8 @@ class CommonPoolEnv(ParallelEnv):
         apple_respawn_probabilities=RESPAWN_PROBABILITIES,
         beam_width=BEAM_WIDTH,
         beam_range=BEAM_RANGE,
-        render_speed=.2
+        render_mode=None,
+        render_speed=.05,
     ):
         self.env_map = env_map
         self.possible_agents = agent_ids
@@ -61,6 +67,7 @@ class CommonPoolEnv(ParallelEnv):
         self.beam_width = beam_width
         self.beam_range = beam_range
         self.render_speed = render_speed
+        self.render_mode = render_mode
 
         self.engine = None
         self.ota = ObservationToArray(value_mapping=self.color_map)
@@ -199,10 +206,13 @@ class CommonPoolEnv(ParallelEnv):
 
     def render(self):
         observation_array = self.ota(self._observation)
-        plt.imshow(observation_array.transpose(1, 2, 0))
-        plt.axis('off')
-        plt.show(block=False)
-        plt.pause(self.render_speed)
+        if self.render_mode == 'human':
+            plt.imshow(observation_array.transpose(1, 2, 0))
+            plt.axis('off')
+            plt.show(block=False)
+            plt.pause(self.render_speed)
+        elif self.render_mode == 'rgb_array':
+            return observation_array
 
 
     def step(self, actions):
