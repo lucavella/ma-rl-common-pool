@@ -8,6 +8,7 @@ from .metrics import (
 from .evaluate import evaluate
 
 from .plots import (
+    plot_rewards,
     plot_efficiency,
     plot_sustainability,
     plot_equality,

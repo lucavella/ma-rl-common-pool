@@ -12,11 +12,13 @@ from .utils import create_directory
 
 
 def evaluate(agent_pool, n_runs, n_episodes, save_dir=None, episode_save_interval=1000):
-    def save_episode(run, episode):
-        save_path = f'{save_dir}/{run}/{episode}/'
+    def save_episode(run, episode, greedy=True):
+        end_dir = 'eval' if greedy else 'train'
+        save_path = f'{save_dir}/{run}/{episode}/{end_dir}/'
         create_directory(save_path)
         frame_i = 0
-        agent_pool.eval()
+        if greedy:
+            agent_pool.eval()
 
         while not agent_pool.game_over:
             frame = agent_pool.render()
@@ -29,7 +31,8 @@ def evaluate(agent_pool, n_runs, n_episodes, save_dir=None, episode_save_interva
         img = Image.fromarray(frame.astype(np.uint8), mode='RGB')
         img.save(save_path + f'frame_{frame_i}.png')
         agent_pool.reset()
-        agent_pool.train()
+        if greedy:
+            agent_pool.train()
     
     n_agents = len(agent_pool.agent_ids)
     expected_rewards = np.zeros((n_runs, n_episodes))
@@ -46,12 +49,14 @@ def evaluate(agent_pool, n_runs, n_episodes, save_dir=None, episode_save_interva
 
         # Do n_episodes episodes
         for ep in tqdm(range(n_episodes), desc="EPISODE", leave=False):
-            if save_dir and ep % episode_save_interval == 0:
-                save_episode(run, ep)
-
             # Execute episode
-            while not agent_pool.game_over:
-                agent_pool.step()
+            if save_dir and ep % episode_save_interval == 0:
+                save_episode(run, ep, greedy=False)
+                save_episode(run, ep, greedy=True)
+
+            else:
+                while not agent_pool.game_over:
+                    agent_pool.step()
 
             # Calculate metric scores
             rewards = np.array(list(agent_pool.reward_history.values()))
@@ -66,7 +71,8 @@ def evaluate(agent_pool, n_runs, n_episodes, save_dir=None, episode_save_interva
             agent_pool.reset()
 
         if save_dir:
-            save_episode(run, n_episodes)
+            save_episode(run, ep, greedy=False)
+            save_episode(run, ep, greedy=True)
             
     return (
         expected_rewards,
