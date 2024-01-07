@@ -72,7 +72,3 @@ if __name__ == '__main__':
             np.save(dir_path + SUS_FNAME, arr=sustainability_score)
             np.save(dir_path + EQU_FNAME, arr=equality_score)
             np.save(dir_path + PEA_FNAME, arr=peace_score)
-            # evaluation.plot_efficiency(efficiency_score, outfile=dir_path + EFF_FNAME)
-            # evaluation.plot_sustainability(sustainability_score, outfile=dir_path + SUS_FNAME)
-            # evaluation.plot_equality(equality_score, outfile=dir_path + EQU_FNAME)
-            # evaluation.plot_peacefulness(peace_score, outfile=dir_path + PEA_FNAME)
